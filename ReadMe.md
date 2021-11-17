@@ -7,5 +7,11 @@ mpic++ pfmwrite.cpp -lm -O3
 
 mpirun -np 2 ./a.out
 
+**How to visualize**
+
+File format is ASCII Tecplot (tec).
+You can visualize the data using ParaView.
+
 **Acknowlege**
+
 Thanks to Ishida and Deji.
