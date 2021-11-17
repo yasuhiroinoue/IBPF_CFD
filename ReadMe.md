@@ -1,4 +1,4 @@
-Computational Fluid Mechanics Simulation for two-phase fluids contacting on solid objects (Liquid-Gas-Solid) using Phase-Field method.
+Computational Fluid Dynamics Simulation for two-phase fluids contacting on solid objects (Liquid-Gas-Solid) using Phase-Field method.
 Off-grid strcutre is implemented by Immersed-Boundary method.
 
 **How to build and run**
