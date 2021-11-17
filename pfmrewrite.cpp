@@ -4,6 +4,10 @@
 // Yasuhiro Inoue
 // inoue.yasuhiro.4n@kyoto-u.ac.jp
 //
+// A super minor revision is applied on Nov 17th, 2021
+// Extention 'plt' is renamed to 'tec', which indicates ASCII Tecplot format.
+// You can visualize the results using ParaView
+//
 // The main code is written by Ishida Kazuki
 // The sweepout is written by Deji Takeji
 //
@@ -2003,7 +2007,7 @@ void filewrite(void){
 
 	/* Tecplotpo */
 	printf("Storing data for Tecplot\n");
-	sprintf(filename_tec,"d-%d.plt",n);
+	sprintf(filename_tec,"d-%d.tec",n);
 	tecout = fopen(filename_tec,"wb");
 	fprintf(tecout,"variables = \"x\",\"y\",\"u\",\"v\",\"pres\",\"divv\",\"phi\",\"rho\",\"flag\",\"flagx\",\"flagy\"\n");
 //	fprintf(tecout,"variables = \"x\",\"y\",\"u\",\"v\",\"pres\",\"divv\",\"rho\"\n");
