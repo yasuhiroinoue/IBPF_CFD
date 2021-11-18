@@ -7,6 +7,8 @@ mpic++ pfmwrite.cpp -lm -O3
 
 mpirun -np 2 ./a.out
 
+(the number of cpu cores should statisfy [XCELL_NUM % (2*np_num) == 0], here np_num is the number of the cores in parallel computing.)
+
 **How to visualize**
 
 File format is ASCII Tecplot (tec).
