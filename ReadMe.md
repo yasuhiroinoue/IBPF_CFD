@@ -13,7 +13,7 @@ The number of cpu cores (np_num) should statisfy [XCELL_NUM % (2*np_num) == 0]. 
 
 File format is ASCII Tecplot (tec).
 You can visualize the data using ParaView.
-
+You can get ParaView at https://www.paraview.org/
 **Acknowlege**
 
 Thanks to Ishida and Deji.
