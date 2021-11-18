@@ -7,7 +7,7 @@ mpic++ pfmwrite.cpp -lm -O3
 
 mpirun -np 2 ./a.out
 
-(the number of cpu cores should statisfy [XCELL_NUM % (2*np_num) == 0], here np_num is the number of the cores in parallel computing.)
+The number of cpu cores (np_num) should statisfy [XCELL_NUM % (2*np_num) == 0].
 
 **How to visualize**
 
