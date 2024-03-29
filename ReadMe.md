@@ -26,5 +26,5 @@ The simulation data is stored in the ASCII Tecplot (`.tec`) format. You can visu
 
 ## Acknowledgements
 
-The development of this code was led by Ishida Kazuki, with contributions from Deji Takeji
+The development of this code was led by Ishida Kazuki, with contributions from Deji Takeji for the sweepout algorithm implementation.
 
