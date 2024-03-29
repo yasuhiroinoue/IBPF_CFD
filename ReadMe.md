@@ -22,7 +22,7 @@ Inoue, Y., Ishida, K., Takada, N., & Hojo, M. (2015). Reductions in Anisotropic 
 
 ## How to Visualize
 
-The simulation data is stored in the ASCII Tecplot (.tec`) format. You can visualize the data using ParaView, which can be obtained from [https://www.paraview.org/](https://www.paraview.org/).
+The simulation data is stored in the ASCII Tecplot (`.tec`) format. You can visualize the data using ParaView, which can be obtained from [https://www.paraview.org/](https://www.paraview.org/).
 
 ## Acknowledgements
 
