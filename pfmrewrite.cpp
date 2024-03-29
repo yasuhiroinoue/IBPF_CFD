@@ -3,6 +3,7 @@
 // For contact information
 // Yasuhiro Inoue
 // inoue.yasuhiro.4n@kyoto-u.ac.jp
+// All comments are translated to English (2024.03.29)
 //
 // A super minor revision is applied on Nov 17th, 2021
 // Extention 'plt' is renamed to 'tec', which indicates ASCII Tecplot format.
@@ -15,10 +16,10 @@
 
 //////////////////////////////////////////////
 ///////			Ishida Kazuki		//////////
-///////	ÅIXV“ú	2010/10/07		//////////
-///////			IB–@+PF–@			//////////
+///////	 updated 2010/10/07  		//////////
+///////			IB method +PF method//////////
 ///////			rewrite				//////////
-///////			ƒXƒ^ƒbƒK[ƒhŠiq	//////////
+///////			staggered lattice	//////////
 ///////								//////////
 //////////////////////////////////////////////
 
@@ -39,33 +40,33 @@
 
 #define EPS1 1.0e-8
 #define EPS2 1.0e-7
-#define EPS3 1.0e-8//1.0e-8	/*SORÅ¬‹–—eŒë·*/
-#define MAX 1000000	/*SORÅ‘åŒJ‚è•Ô‚µ”*/
+#define EPS3 1.0e-8 //1.0e-8 /*Minimum allowable error for SOR*/
+#define MAX 1000000 /*Maximum number of SOR iterations*/
 #define XMAX 96.0
 #define YMAX 120.0
-#define XCELL_NUM 96	//cell”
-#define YCELL_NUM 120	//cell”
-#define dt	1.25e-2	//ŠÔ‚İ•
-#define RHOL 1.0	//‰t‘Ì‚Ì–§“x
-#define RHOG 1.25e-3	//‹C‘Ì‚Ì–§“x
-#define RHOS 0.5	//•¨‘Ì“à•”–§“x
-#define MUL 5.12e-1//1.67e-1		//”S«ŒW”
-#define MUG 6.9375e-3//1.3875e-3//2.26e-3	//‹C‘Ì‚Ì”S«ŒW”
-#define MUS 0.01	//•¨‘Ì“à•”‚Ì”S«(g—p‚¹‚¸)
-#define PHImax	0.405
-#define PHImin	0.265
+#define XCELL_NUM 96 //Number of cells
+#define YCELL_NUM 120 //Number of cells
+#define dt 1.25e-2 //Time step width
+#define RHOL 1.0 //Density of liquid
+#define RHOG 1.25e-3 //Density of gas
+#define RHOS 0.5 //Internal density of object
+#define MUL 5.12e-1//1.67e-1 /*Viscosity coefficient*/
+#define MUG 6.9375e-3//1.3875e-3//2.26e-3 /*Viscosity of gas*/
+#define MUS 0.01 //Viscosity inside the object (not used)
+#define PHImax 0.405
+#define PHImin 0.265
 #define PHIG 0.275
 #define PHIL 0.380
 #define TMAX 1.0
-#define gamma 12.0	//ˆÕ“®“x
-#define gammas -1.0e-3	//”G‚ê«
-#define vdWa 1.0	//vdW Model‚Ì’è”
-#define vdWb 1.0	//vdW Model‚Ì’è”
-#define vdWT 0.293	//vdW Model‚Ì‰·“x
+#define gamma 12.0 //Mobility
+#define gammas -1.0e-3 //Wettability
+#define vdWa 1.0 //Constant of vdW Model
+#define vdWb 1.0 //Constant of vdW Model
+#define vdWT 0.293 //Temperature of vdW Model
 #define kappa1 1.3778//2.94e-2
 #define kappa2 0.1
 #define gravity 0.0//1.5e-4
-#define ALPHA 0.8	//SORŠÉ˜aŒW”
+#define ALPHA 0.8 //SOR relaxation factor
 #define ALPHA2 0.8//1.0
 #define ALPHA3 0.8//1.2
 #define fiberx 32.0
@@ -73,13 +74,13 @@
 #define Diameter 32.0
 #define diameter2 144.0
 //#define KAIDAN
-#define HEIGHT 0	//ŠK’ió‚É‚·‚éê‡‚Ég—p
+#define HEIGHT 0 //Used for making a staircase-like shape
 #define NORMERR 1.0e-5
 #define FLAGERR -10e-5
-#define FIBER_NUM 1	//‘@ˆÛ‚Ì–{”
-#define LJE 5.0e-7	//‘@ˆÛ‚ÌÕ“Ë‚ğ‰ñ”ğ‚·‚é‚½‚ß‚Ìƒ|ƒeƒ“ƒVƒƒƒ‹—p
-#define SIGMAPLUS 3.0	//‘@ˆÛ’¼Œa‚É‘«‚µ‚ÄÕ“Ë’¼Œa‚É‚·‚é
-#define CUTOFF 3.0	//Õ“Ë’¼Œa‚©‚ç‚ÌƒJƒbƒgƒIƒt‹——£
+#define FIBER_NUM 1 //Number of fibers
+#define LJE 5.0e-7 //Potential used to avoid fiber collision
+#define SIGMAPLUS 3.0 //Added to the fiber diameter to make the collision diameter
+#define CUTOFF 3.0 //Cutoff distance from the collision diameter
 #define L 32.0
 #define H0 100.0
 #define DEGREE (180.0-63.0)
@@ -89,70 +90,73 @@
 
 
 struct _cell_type {
-	double v_x;	//x•ûŒü—¬‘¬
-	double v_y;	//y•ûŒü—¬‘¬
-	double press;		//ˆ³—Í
-	double v_xhypo;	//‰¼‚Ìx•ûŒü—¬‘¬
-	double v_yhypo;	//‰¼‚Ìy•ûŒü—¬‘¬
-	double hx;	//Adams Bashforth–@ vx‚Ì‘•ª ‘OƒXƒeƒbƒv•ª
-	double hy;	//Adams Bashforth–@ vy‚Ì‘•ª ‘OƒXƒeƒbƒv•ª
-	double x;	//xÀ•W
-	double y;	//yÀ•W
-	double phi;	//’˜•Ï”
-	double phi_x;	//x•ûŒü‹«ŠEã‚Å‚Ì’l
-	double phi_y;	//y•ûŒü‹«ŠEã‚Å‚Ì’l
-	double hf;	//Adams Bashforth–@ phi‚ÌXV ‘OƒXƒeƒbƒv•ª
-	double rho;	//–§“x
-	double rho_x;
-	double rho_y;
-	double vof;	//•¨‘Ì‚Ì‘ÌÏ•ª—¦
-	double vof_x;
-	double vof_y;
-	double ls;	//•¨‘Ì•\–Ê‚©‚ç‚Ì‹——£(Level-setŠÖ”)
-	double ls_x;
-	double ls_y;
+    double v_x; // Velocity in x direction
+    double v_y; // Velocity in y direction
+    double press; // Pressure
+    double v_xhypo; // Hypothetical velocity in x direction
+    double v_yhypo; // Hypothetical velocity in y direction
+    double hx; // Increment of vx by Adams Bashforth method for the previous step
+    double hy; // Increment of vy by Adams Bashforth method for the previous step
+    double x; // x coordinate
+    double y; // y coordinate
+    double phi; // Order parameter
+    double phi_x; // Value on the boundary in x direction
+    double phi_y; // Value on the boundary in y direction
+    double hf; // Update of phi by Adams Bashforth method for the previous step
+    double rho; // Density
+    double rho_x;
+    double rho_y;
+    double vof; // Volume fraction of the object
+    double vof_x;
+    double vof_y;
+    double ls; // Distance from the surface of the object (Level-set function)
+    double ls_x;
+    double ls_y;
 };
+
 
 struct _fiber_type{
-	double x;
-	double y;
-	double radius;	//”¼Œa
-	double v_x;
-	double v_y;
-	double v_xold;	//‘OƒXƒeƒbƒv‚Ì‘¬“x
-	double v_yold;
-	double angle;	//•¨‘Ì‚ÌŠp“x
-	double angvel;	//Šp‘¬“x
-	double angvelold;	//Šp‘¬“x‚Ì‘OƒXƒeƒbƒv•ª
-	double hx;	//Adams Bashforth–@ vx‚Ì‘•ª ‘OƒXƒeƒbƒv•ª
-	double hy;
-	double ha;	//Adams Bashforth–@ angvel‚Ì‘•ª ‘OƒXƒeƒbƒv•ª
+    double x;
+    double y;
+    double radius; // Radius
+    double v_x;
+    double v_y;
+    double v_xold; // Velocity of the previous step
+    double v_yold;
+    double angle; // Angle of the object
+    double angvel; // Angular velocity
+    double angvelold; // Angular velocity of the previous step
+    double hx; // Increment of vx by Adams Bashforth method for the previous step
+    double hy;
+    double ha; // Increment of angvel by Adams Bashforth method for the previous step
 };
 
-struct _flag_type {	//•¨‘Ì•\–Ê‚©‚ç‰½ƒZƒ‹–Ú‚©‚ğ•\‚·flag
-	int c;
-	int x;
-	int y;
-	int fiber;
-	int fiber_x;
-	int fiber_y;
+struct _flag_type { // Flag indicating the number of cells from the surface of the object
+    int c;
+    int x;
+    int y;
+    int fiber; // Indicates the presence of a fiber
+    int fiber_x;
+    int fiber_y;
 };
+
 
 
 _flag_type* FLAG;
 _fiber_type* FIBER;
 
-struct _mu_type{	//”S«
-	double c;		//’†‰›
-	double x;		//Šiq–Ê’†Sã
-	double y;
-	double xy;		//Šiq•Ó’†“_ã
+struct _mu_type{ // Viscosity
+    double c; // Center
+    double x; // On the center of the lattice face
+    double y;
+    double xy; // At the midpoint of the lattice edge
 };
 
-struct _vold_type{	//XV‘O‚Ì—¬‘¬•Û‚Ì‚½‚ß
-	double x;
-	double y;
+struct _vold_type{ // For holding the velocity before updating
+    double x;
+    double y;
 };
+
 
 double	dx = XMAX / (double) XCELL_NUM;
 double	dy = YMAX / (double) YCELL_NUM;
@@ -163,40 +167,40 @@ using namespace std;
 int n,nout,TCELL_NUM;
 double h_inold;
 
-void solidlagpoint(_fiber_type* fiberp,int fibernumber);	//•¨‘Ì‚É“­‚­—Í‚ÌŒvZ ‘æˆê’iŠK
-void solidlagpointsecond(_fiber_type* fiberp,int fibernumber);	//•¨‘Ì‚É“­‚­—Í‚ÌŒvZ ‘æ“ñ’iŠK
-void solidmove(void);	//•¨‘Ì‚ÌˆÚ“®ŒvZ Crank Nicolson–@
-void flagdefine(void);	//‘ÌÏ•ª—¦‹y‚Ñflag‚ÌŒˆ’è
-void flagbnd(void);	//flag‹«ŠEğŒ
-void vhypobnd(void);	//vhypo‹«ŠEğŒ
-void kyokai(void);	//—¬‘¬‹«ŠEğŒ
-void vofbnd(void);	//•¨‘Ì‘ÌÏ•ª—¦‹«ŠEğŒ
-void pressbnd(void);	//ˆ³—Í‹«ŠEğŒ
-void phibnd(void);	//phi‹«ŠEğŒ
-void phikyokaibnd(void);	//ƒZƒ‹‹«ŠEã‚Ìphi‹«ŠEğŒ
-void phid2bnd(double phid2[(XCELL_NUM+6)*(YCELL_NUM+6)]);	//ƒ‰ƒvƒ‰ƒVƒAƒ“phi‚Ì‹«ŠEğŒ
-void ddrhodefine(void);	//ƒ‰ƒvƒ‰ƒVƒAƒ“rho‚ÌŒˆ’è
-void ddrhobnd(void);	//ƒ‰ƒvƒ‰ƒVƒAƒ“rho‚Ì‹«ŠEğŒ
-void Fbnd(double Fx[(XCELL_NUM+6)*(YCELL_NUM+6)],double  Fy[(XCELL_NUM+6)*(YCELL_NUM+6)]);	//phi‚ÌFlux‹«ŠEğŒ
-void nseq(void);	//NS•û’ö®
-void filewrite(void);	//Tecploto—Í
-void koshin(void);	//SOR–@ ‘¬“xCˆ³—ÍC³
-void rhodefine(void);	//rho‚ÌŒˆ’è
-void mudefine(void);	//mu‚ÌŒˆ’è
-void CH_eq(void);	//Cahn-Hilliard®
-void restartwrite(void);	//restartƒtƒ@ƒCƒ‹ì¬
-void restartread(void);		//restartƒtƒ@ƒCƒ‹“Ç‚İ‚İ
-void indexsetdefine(int i, int j);	//\‘¢‘Ì‚ÉƒAƒNƒZƒX‚·‚é‚½‚ß‚Ìindex‚Ì’è‹`
+void solidlagpoint(_fiber_type* fiberp,int fibernumber); // Calculation of forces acting on the object, Stage 1
+void solidlagpointsecond(_fiber_type* fiberp,int fibernumber); // Calculation of forces acting on the object, Stage 2
+void solidmove(void); // Calculation of object movement using Crank Nicolson method
+void flagdefine(void); // Determination of volume fraction and flags
+void flagbnd(void); // Flag boundary conditions
+void vhypobnd(void); // vhypo boundary conditions
+void kyokai(void); // Velocity boundary conditions
+void vofbnd(void); // Boundary conditions for object volume fraction
+void pressbnd(void); // Pressure boundary conditions
+void phibnd(void); // phi boundary conditions
+void phikyokaibnd(void); // phi boundary conditions on the cell boundary
+void phid2bnd(double phid2[(XCELL_NUM+6)*(YCELL_NUM+6)]); // Laplacian phi boundary conditions
+void ddrhodefine(void); // Determination of Laplacian rho
+void ddrhobnd(void); // Laplacian rho boundary conditions
+void Fbnd(double Fx[(XCELL_NUM+6)*(YCELL_NUM+6)],double  Fy[(XCELL_NUM+6)*(YCELL_NUM+6)]); // phi Flux boundary conditions
+void nseq(void); // Navier-Stokes equations
+void filewrite(void); // Output for Tecplot
+void koshin(void); // SOR method for velocity and pressure correction
+void rhodefine(void); // Determination of rho
+void mudefine(void); // Determination of mu
+void CH_eq(void); // Cahn-Hilliard equation
+void restartwrite(void); // Creation of restart file
+void restartread(void); // Reading of restart file
+void indexsetdefine(int i, int j); // Definition of indexes for accessing structures
 void indexSORdefine(int i, int j);
 void indexnseq(int i, int j);
 void indexbndx(int j);
 void indexbndy(int i);
-double interphi(int cellindex,int phiflag);	//•¨‘Ì•\–Êü•Ó‚ÌŠO‘}‚Ì‚½‚ß‚ÌŠÖ”
-double ljpower(double sigma,double distance);	//ƒŒƒi[ƒhEƒWƒ‡[ƒ“ƒY ƒ|ƒeƒ“ƒVƒƒƒ‹
-void discount(void);	//•K—v‚É‰‚¶‚Äo—Í
+double interphi(int cellindex,int phiflag); // Function for extrapolation around the object surface
+double ljpower(double sigma,double distance); // Lennard-Jones potential
+void discount(void); // Output as necessary
 #ifdef USEMPI
-void initial(int my_rank);	//‰ŠúğŒ
-void SOR(int chkflag, int my_rank);	//SOR–@
+void initial(int my_rank); // Initial conditions
+void SOR(int chkflag, int my_rank); // SOR method
 void hontai(int chkflag, int my_rank);
 void projection(int chkflag,int my_rank);
 #else
@@ -207,26 +211,26 @@ void projection(int chkflag);
 #endif
 
 _cell_type* CELL;
-_vold_type* VOLD;	//XV‘O‚Ì—¬‘¬‚ğ•Û‚·‚é‚½‚ß‚Ì‚à‚Ì
+_vold_type* VOLD; // For holding the velocity before updating
 
 _mu_type* TMPMU;
-double* wetphi;	//-wettingpotential/kappa2
+double* wetphi; // -wetting potential/kappa2
 double* Fx;
 double* Fy;
 double* phid2;
 double* ddrho;
-int fibernum=FIBER_NUM;	//üŠú‹«ŠE‚Ìê‡‚É”z’u‚·‚é‰¼‘z‚Ì•¨‘Ì‚ğŠÜ‚ß‚½•¨‘Ì”‚ğì‚é‚½‚ß‚Ì‰º€”õ
-double wetphiwall;	//•Ç–Ê‚Ì”G‚ê«
+int fibernum = FIBER_NUM; // Preparation for creating the number of objects, including virtual objects placed in the case of periodic boundaries
+double wetphiwall; // Wettability of the wall surface
 double* fiberfx;
 double* fiberfy;
 double* fibern;
 
-//MPI‚Å‚Ì’ÊM—p
+// For communication in MPI
 double* mail2;
 double* mail1;
 int process_num;
 
-//\‘¢‘Ìƒƒ“ƒoƒAƒNƒZƒX—p‚Ìindex ‹y‚Ñ\‘¢‘Ì‚Ì—pˆÓ
+// Index for accessing structure members and preparation of structures
 int index0;
 int index_xm;
 int index_xp;
@@ -974,10 +978,9 @@ void flagdefine(void){
 int main(int argc, char* argv[]){
 	int restartout;
 	int chkflag;
-	int my_rank;	/*MPI‚Ìrank*/
+	int my_rank;	/* MPI rank */
 	
-	//-------- •À—ñŒvZ ------//
-
+	//-------- Parallel computation ------//
 	
 	TCELL_NUM=400000;
 	nout=2000;
@@ -986,11 +989,11 @@ int main(int argc, char* argv[]){
 	n=0;
 	
 
-	MPI_Init(&argc, &argv);			//‚·‚×‚Ä‚ÌMPIŠÖ”‚ğŒÄ‚Ño‚·‘O‚Éˆê‰ñ‚¾‚¯ŒÄ‚Ño‚·
+	MPI_Init(&argc, &argv);			// Call this exactly once before calling any other MPI functions
 	
-	MPI_Comm_size(MPI_COMM_WORLD, &process_num);		//ƒRƒ~ƒ…ƒjƒP[ƒ^“à‚ÌƒvƒƒZƒX‚Ì”‚ğæ“¾B
+	MPI_Comm_size(MPI_COMM_WORLD, &process_num);		// Get the number of processes in the communicator.
 	
-	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);		//ƒRƒ~ƒ…ƒjƒP[ƒ^“à‚ÌŠeƒvƒƒZƒX‚ª©•ª‚Ìrank‚ğæ“¾
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);		// Each process in the communicator obtains its own rank
 	initial(my_rank);
 	if(my_rank==0) filewrite();
 	
@@ -1026,7 +1029,7 @@ int main(int argc, char* argv[]){
 	delete [] FLAG;
 	return 0;
 }
-#else	//USEMPI‚Ìelse
+#else	// Else for USEMPI
 int main(void){
 	int restartout;
 	int chkflag;
@@ -1064,10 +1067,9 @@ int main(void){
 }
 #endif
 
-			//-------------- mainŠÖ”I‚í‚è ----------------//
+			//-------------- End of main function ----------------//
 
-
-			//-------------- ‰Šú‰» -----------------------//
+			//-------------- Initialization -----------------------//
 #ifdef USEMPI
 void initial(int my_rank){
 #else
@@ -1290,9 +1292,9 @@ void initial(void){
 		CH_eq();
 	}
 }
-			//-------------- ‰Šú‰»I‚í‚è -----------------//
+			//-------------- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Iï¿½ï¿½ï¿½ -----------------//
 	
-			//-------------- ŒvZ–{‘Ì ---------------------//
+			//-------------- ï¿½vï¿½Zï¿½{ï¿½ï¿½ ---------------------//
 #ifdef USEMPI
 void hontai(int chkflag, int my_rank){
 	for(int i=0; i<(XCELL_NUM+6); i++) {
@@ -1317,7 +1319,7 @@ void hontai(int chkflag, int my_rank){
 	flagbnd();
 }
 	
-#else		//USEMPI‚Ìelse
+#else		//USEMPIï¿½ï¿½else
 	
 void hontai(int chkflag){
 	for(int i=0; i<(XCELL_NUM+6); i++) {
@@ -1327,7 +1329,7 @@ void hontai(int chkflag){
 				_vold_type* voldp = &VOLD[index0];
 				cellp = &CELL[index0];
 				
-				voldp->x = cellp->v_x;							//‚±‚Ìó‘Ô‚Å‚Ícellp->v_x‚Í‚Ü‚¾‚à‚Æ‚Ì‚Ü‚Ü
+				voldp->x = cellp->v_x;							//ï¿½ï¿½ï¿½Ìï¿½Ô‚Å‚ï¿½cellp->v_xï¿½Í‚Ü‚ï¿½ï¿½ï¿½ï¿½Æ‚Ì‚Ü‚ï¿½
 				voldp->y = cellp->v_y;
 			
 		}
@@ -1342,7 +1344,7 @@ void hontai(int chkflag){
 	flagbnd();
 }	
 #endif
-			//-------------- ŒvZ–{‘ÌI‚í‚è ---------------//
+			//-------------- ï¿½vï¿½Zï¿½{ï¿½ÌIï¿½ï¿½ï¿½ ---------------//
 	
 	
 			//-------------- projection -------------------//
@@ -1362,7 +1364,7 @@ void projection(int chkflag,int my_rank){
 	kyokai();
 	kyokai();
 }
-#else //USEMPI‚Ìelse
+#else //USEMPIï¿½ï¿½else
 void projection(int chkflag){
 	nseq();
 	
@@ -1377,10 +1379,10 @@ void projection(int chkflag){
 	kyokai();
 }
 #endif //USEMPI
-			//-------------- projectionI‚í‚è -------------//
+			//-------------- projectionï¿½Iï¿½ï¿½ï¿½ -------------//
 	
 	
-			//-------------- ‰¼‚Ì—¬‘¬‚Ì“±o ---------------//
+			//-------------- ï¿½ï¿½ï¿½Ì—ï¿½ï¿½ï¿½ï¿½Ì“ï¿½ï¿½o ---------------//
 void nseq(void){
 	double vx_average,vy_average,vxvxx,vyvxy,vyvyy,vxvyx;
 	double dxi, dyi, iryu, kaku,kaimen;
@@ -1396,7 +1398,7 @@ void nseq(void){
 	dyi = 1.0/dy;
 	
 #ifndef WALLX	
-	for(int i=3/*4*/; i<(XCELL_NUM+3); i++){					//üŠú‹«ŠE‚Å‚Í3
+	for(int i=3/*4*/; i<(XCELL_NUM+3); i++){					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Eï¿½Å‚ï¿½3
 
 #else
 	for(int i=3; i<(XCELL_NUM+3); i++){					
@@ -1421,7 +1423,7 @@ void nseq(void){
 				
 					kaimen=(1.0-cellp->vof_x)*kappa1*dxi*(-ddrho[index_xp]+27.0*(ddrho[index0]-ddrho[index_xm])+ddrho[index_xmm])/24.0*cellp->rho_x/(cellp->rho_x*(1.0-cellp->vof_x)+RHOS*cellp->vof_x);
 
-	if(n==0) cellp->v_xhypo = cellp->v_x + dt*(iryu + kaku + kaimen);	//1‰ñ–Ú
+	if(n==0) cellp->v_xhypo = cellp->v_x + dt*(iryu + kaku + kaimen);	//1ï¿½ï¿½ï¿½
 	else cellp->v_xhypo = cellp->v_x + 0.5*dt*(3.0*(iryu + kaku + kaimen)-cellp->hx);
 				cellp->hx=iryu + kaku + kaimen;
 				//				printf("%f %f %f %f %f %f \n",cellp->x,cellp->y,cellp->v_xhypo,iryu,kaku,kaimen);//debug
@@ -1432,7 +1434,7 @@ void nseq(void){
 
 	for(int i=3; i<(XCELL_NUM+4); i++){
 #ifndef WALLY
-		for(int j=3/*4*/; j<(YCELL_NUM+3); j++){					//üŠú‹«ŠE‚Å‚Í3
+		for(int j=3/*4*/; j<(YCELL_NUM+3); j++){					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Eï¿½Å‚ï¿½3
 #else
 		for(int j=3; j<(YCELL_NUM+3); j++){					
 #endif
@@ -1454,7 +1456,7 @@ void nseq(void){
 
 			kaimen=(1.0-cellp->vof_y)*kappa1*dyi*(-ddrho[index_yp]+27.0*(ddrho[index0]-ddrho[index_ym])+ddrho[index_ymm])/24.0*cellp->rho_y/(cellp->rho_y*(1.0-cellp->vof_y)+RHOS*cellp->vof_y);
 
-	if(n==0) cellp->v_yhypo = cellp->v_y + dt*(iryu + kaku + kaimen);	//1‰ñ–Ú
+	if(n==0) cellp->v_yhypo = cellp->v_y + dt*(iryu + kaku + kaimen);	//1ï¿½ï¿½ï¿½
 	else			cellp->v_yhypo = cellp->v_y + dt*0.5*(3.0*(iryu + kaku + kaimen)-cellp->hy);
 				cellp->hy=iryu + kaku + kaimen;
 		}
@@ -1470,7 +1472,7 @@ void nseq(void){
 		}
 	}
 }
-			//-------------- ‰¼‚Ì—¬‘¬‚Ì“±oI‚í‚è ---------//
+			//-------------- ï¿½ï¿½ï¿½Ì—ï¿½ï¿½ï¿½ï¿½Ì“ï¿½ï¿½oï¿½Iï¿½ï¿½ï¿½ ---------//
 		
 		
 		
@@ -1607,7 +1609,7 @@ void koshin(void){
 	}
 */		
 	
-	//üŠú‹«ŠEğŒ‚Å•¨‘Ì‚ª‹«ŠE‚ğ‚Ü‚½‚®‚Æ‚«‚Íl—¶‚·‚é‚±‚Æ
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Eï¿½ï¿½ï¿½ï¿½ï¿½Å•ï¿½ï¿½Ì‚ï¿½ï¿½ï¿½ï¿½Eï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½ï¿½Æ‚ï¿½ï¿½Ílï¿½ï¿½ï¿½ï¿½ï¿½é‚±ï¿½ï¿½
 /*	for(int f=fibernum-1; f>=FIBER_NUM; f--){
 		fiberfx[f-FIBER_NUM]+=fiberfx[f];
 		fiberfy[f-FIBER_NUM]+=fiberfy[f];
@@ -1650,13 +1652,13 @@ void koshin(void){
 //		}
 //	}
 }
-			//-------------- koshin I‚í‚è ---------------//
+			//-------------- koshin ï¿½Iï¿½ï¿½ï¿½ ---------------//
 			
 			
 		
 		
 		
-			//-------------- rho‚ÌŒˆ’è --------------------//
+			//-------------- rhoï¿½ÌŒï¿½ï¿½ï¿½ --------------------//
 void rhodefine(void) {
 	for(int i=0; i<(XCELL_NUM+6); i++) {
 		for(int j=0; j<(YCELL_NUM+6); j++) {
@@ -1689,7 +1691,7 @@ void rhodefine(void) {
 	}
 	*/
 }
-			//-------------- rho‚ÌŒˆ’èI‚í‚è --------------//
+			//-------------- rhoï¿½ÌŒï¿½ï¿½ï¿½Iï¿½ï¿½ï¿½ --------------//
 			
 	
 void ddrhodefine(void){
@@ -1724,7 +1726,7 @@ void ddrhodefine(void){
 		
 void ddrhobnd(void){
 #ifndef WALLY
-	for(int i=0; i<(XCELL_NUM+6); i++){											//üŠú‹«ŠE
+	for(int i=0; i<(XCELL_NUM+6); i++){											//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½E
 		indexbndy(i);
 		
 		ddrho[index_y0]   = ddrho[index_ycp0];
@@ -1749,7 +1751,7 @@ void ddrhobnd(void){
 #endif
 	
 #ifdef WALLY
-	for(int i=0; i<(XCELL_NUM+6); i++){											//•Ç–Ê
+	for(int i=0; i<(XCELL_NUM+6); i++){											//ï¿½Ç–ï¿½
 		indexbndy(i);
 			
 			ddrho[index_y0]   = ddrho[index_y5];
@@ -1776,7 +1778,7 @@ void ddrhobnd(void){
 }
 		
 			
-			//----------- MU‚ÌŒˆ’è ---------------//
+			//----------- MUï¿½ÌŒï¿½ï¿½ï¿½ ---------------//
 void mudefine(void) {
 	double phixy;
 	double rhoxy;
@@ -1808,7 +1810,7 @@ void mudefine(void) {
 	}
 }
 
-			//----------- MU‚ÌŒˆ’èI‚í‚è ---------//
+			//----------- MUï¿½ÌŒï¿½ï¿½ï¿½Iï¿½ï¿½ï¿½ ---------//
 		
 		
 		
@@ -1955,7 +1957,7 @@ void CH_eq(void) {
 		
 void Fbnd(double Fx[(XCELL_NUM+6)*(YCELL_NUM+6)],double Fy[(XCELL_NUM+6)*(YCELL_NUM+6)]){
 #ifdef WALLY
-	for(int i=0; i<(XCELL_NUM+6); i++){										//•Ç–Ê
+	for(int i=0; i<(XCELL_NUM+6); i++){										//ï¿½Ç–ï¿½
 		indexbndy(i);
 			
 		Fx[index_y0]   = -Fx[index_y5];
@@ -2070,12 +2072,12 @@ void filewrite(void){
 }
 
 
-//-------------- ‰¼‚Ì—¬‘¬‹«ŠEğŒ ---------------------//
+//-------------- ï¿½ï¿½ï¿½Ì—ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Eï¿½ï¿½ï¿½ï¿½ ---------------------//
 void vhypobnd(void){
 	
 #ifndef WALLY
 	
-	for(int i=0; i<(XCELL_NUM+6); i++){										//üŠú‹«ŠE
+	for(int i=0; i<(XCELL_NUM+6); i++){										//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½E
 		indexbndy(i);
 			
 		cellp_y0->v_xhypo   = cellp_ycp0->v_xhypo;
@@ -2126,7 +2128,7 @@ void vhypobnd(void){
 #endif
 
 #ifdef WALLY
-	for(int i=0; i<(XCELL_NUM+6); i++){										//•Ç–Ê
+	for(int i=0; i<(XCELL_NUM+6); i++){										//ï¿½Ç–ï¿½
 		indexbndy(i);
 			
 /*		cellp_y0->v_xhypo   = -cellp_y5->v_xhypo;			//cavity
@@ -2178,13 +2180,13 @@ void vhypobnd(void){
 	}
 #endif
 }
-			//-------------- ‰¼‚Ì—¬‘¬‹«ŠEğŒI‚í‚è ---------------//
+			//-------------- ï¿½ï¿½ï¿½Ì—ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Eï¿½ï¿½ï¿½ï¿½ï¿½Iï¿½ï¿½ï¿½ ---------------//
 
 
-			//-------------- —¬‘¬‚Ì‹«ŠEğŒ -----------//
+			//-------------- ï¿½ï¿½ï¿½ï¿½ï¿½Ì‹ï¿½ï¿½Eï¿½ï¿½ï¿½ï¿½ -----------//
 void kyokai(void){
 #ifndef WALLY
-	for(int i=0; i<(XCELL_NUM+6); i++){										//üŠú‹«ŠE
+	for(int i=0; i<(XCELL_NUM+6); i++){										//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½E
 		indexbndy(i);
 			
 		cellp_y0->v_x   = cellp_ycp0->v_x;
@@ -2233,7 +2235,7 @@ void kyokai(void){
 	}
 #endif
 #ifdef WALLY
-	for(int i=0; i<(XCELL_NUM+6); i++){										//•Ç–Ê
+	for(int i=0; i<(XCELL_NUM+6); i++){										//ï¿½Ç–ï¿½
 		indexbndy(i);
 			
 /*		cellp_y0->v_x   = -cellp_y5->v_x;	//cavity
@@ -2285,7 +2287,7 @@ void kyokai(void){
 	}
 #endif
 }
-			//-------------- —¬‘¬‚Ì‹«ŠEğŒI‚í‚è -----//
+			//-------------- ï¿½ï¿½ï¿½ï¿½ï¿½Ì‹ï¿½ï¿½Eï¿½ï¿½ï¿½ï¿½ï¿½Iï¿½ï¿½ï¿½ -----//
 
 
 //-------------- E -----------------//
@@ -3186,7 +3188,7 @@ double interphi(int cellindex,int phiflag){
 		else yflag=0;
 #endif
 */		
-		ctrgt = (int)((ctargetx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((ctargety+2.5*dy)/dy);	//ˆÚ“®‚³‚¹‚½“_‚Ì¶‰º‚Ì“_
+		ctrgt = (int)((ctargetx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((ctargety+2.5*dy)/dy);	//ï¿½Ú“ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½_ï¿½Ìï¿½ï¿½ï¿½ï¿½Ì“_
 		ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		ctrgt_xp = ctrgt + YCELL_NUM+6;
 		ctrgt_yp = ctrgt + 1;
@@ -3202,7 +3204,7 @@ double interphi(int cellindex,int phiflag){
 		
 		if(hnum==99) printf("hnum>99 error x=%f y=%f flag=%d\n",cellp_in->x,cellp_in->y,phiflag);
 		
-		if(marknvec_x>0.92388){	//c
+		if(marknvec_x>0.92388){	//ï¿½c
 			if((flagp->c%2)&&(flagp_yp->c%2)){
 				hnum=100;
 				
@@ -3246,7 +3248,7 @@ double interphi(int cellindex,int phiflag){
 				}
 			}
 		}
-		else if(marknvec_y>0.92388){	//‰¡
+		else if(marknvec_y>0.92388){	//ï¿½ï¿½
 			if((flagp->c%2)&&(flagp_xp->c%2)){
 				hnum=100;
 				
@@ -3268,7 +3270,7 @@ double interphi(int cellindex,int phiflag){
 				}
 			}
 		}
-		else if(marknvec_y<-0.92388){	//‰¡
+		else if(marknvec_y<-0.92388){	//ï¿½ï¿½
 			if((flagp_yp->c%2)&&(flagp_xp_yp->c%2)){
 				hnum=100;
 				
@@ -3290,7 +3292,7 @@ double interphi(int cellindex,int phiflag){
 				}
 			}
 		}
-		else if((marknvec_x*marknvec_y)>0.0){	//Î‚ß(ŒX‚«•‰)
+		else if((marknvec_x*marknvec_y)>0.0){	//ï¿½Î‚ï¿½(ï¿½Xï¿½ï¿½ï¿½ï¿½)
 			if((flagp_xp->c%2)&&(flagp_yp->c%2)){
 				hnum=100;
 				
@@ -3312,7 +3314,7 @@ double interphi(int cellindex,int phiflag){
 				}
 			}
 		}
-		else {	//Î‚ß(ŒX‚«³)
+		else {	//ï¿½Î‚ï¿½(ï¿½Xï¿½ï¿½ï¿½ï¿½)
 			if((flagp->c%2)&&(flagp_xp_yp->c%2)){
 				hnum=100;
 				
@@ -3363,7 +3365,7 @@ double interphi(int cellindex,int phiflag){
 	array_deji[0][2]=marknvec_y;
 	b_deji[0]=0.0;
 	
-	lu(array_deji,b_deji,x_deji);	//LU•ª‰ğ
+	lu(array_deji,b_deji,x_deji);	//LUï¿½ï¿½ï¿½ï¿½
 	
 	
 	
@@ -3436,7 +3438,7 @@ void solidlagpoint(_fiber_type* fiberp,int fibernumber){
 	dvydy = new double [CELL_SIZE];
 	memset(dvydy,0,CELL_SIZE*sizeof(double));
 	
-	for(int i=3; i<(XCELL_NUM+3); i++){					//üŠú‹«ŠE‚Å‚Í3
+	for(int i=3; i<(XCELL_NUM+3); i++){					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Eï¿½Å‚ï¿½3
 		for(int j=3; j<(YCELL_NUM+3); j++){
 			indexnsdefine(i,j);
 			
@@ -3644,7 +3646,7 @@ void solidlagpoint(_fiber_type* fiberp,int fibernumber){
 		double nvec_x = cos(2.0*M_PI/(double)lagnum*(double)lagindex);
 		double nvec_y = sin(2.0*M_PI/(double)lagnum*(double)lagindex);
 		
-		int ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	//ˆÚ“®‚³‚¹‚½“_‚Ì¶‰º‚Ì“_
+		int ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	//ï¿½Ú“ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½_ï¿½Ìï¿½ï¿½ï¿½ï¿½Ì“_
 		int ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		int ctrgt_xp = ctrgt + YCELL_NUM+6;
 		int ctrgt_yp = ctrgt + 1;
@@ -3690,7 +3692,7 @@ void solidlagpoint(_fiber_type* fiberp,int fibernumber){
 		
 		lagmu = MUG+(MUL-MUG)/(RHOL-RHOG)*(lagrho-RHOG);
 		
-		ctrgt = (int)((fiberlagx+3.0*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	//ˆÚ“®‚³‚¹‚½“_‚Ì¶‰º‚Ì“_
+		ctrgt = (int)((fiberlagx+3.0*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	//ï¿½Ú“ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½_ï¿½Ìï¿½ï¿½ï¿½ï¿½Ì“_
 		ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		ctrgt_xp = ctrgt + YCELL_NUM+6;
 		ctrgt_yp = ctrgt + 1;
@@ -3703,7 +3705,7 @@ void solidlagpoint(_fiber_type* fiberp,int fibernumber){
 		lagv_x = (ctrgtp->v_x*(ctrgtp_xp->x-0.5*dx-fiberlagx)*(ctrgtp_yp->y-fiberlagy)/dx/dy + ctrgtp_xp->v_x*(fiberlagx-ctrgtp->x+0.5*dx)*(ctrgtp_yp->y-fiberlagy)/dx/dy
 					+ ctrgtp_yp->v_x*(ctrgtp_xp->x-0.5*dx-fiberlagx)*(fiberlagy-ctrgtp->y)/dx/dy + ctrgtp_xp_yp->v_x*(fiberlagx-ctrgtp->x+0.5*dx)*(fiberlagy-ctrgtp->y)/dx/dy);
 		
-		ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+3.0*dy)/dy);	//ˆÚ“®‚³‚¹‚½“_‚Ì¶‰º‚Ì“_
+		ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+3.0*dy)/dy);	//ï¿½Ú“ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½_ï¿½Ìï¿½ï¿½ï¿½ï¿½Ì“_
 		ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		ctrgt_xp = ctrgt + YCELL_NUM+6;
 		ctrgt_yp = ctrgt + 1;
@@ -3758,7 +3760,7 @@ void solidlagpointsecond(_fiber_type* fiberp,int fibernumber){
 		fiberlagx = fiberp->x+(fiberp->radius+deltar*0.5)*cos(2.0*M_PI/(double)lagnum*(double)lagindex);
 		fiberlagy = fiberp->y+(fiberp->radius+deltar*0.5)*sin(2.0*M_PI/(double)lagnum*(double)lagindex);
 		
-		int ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	//ˆÚ“®‚³‚¹‚½“_‚Ì¶‰º‚Ì“_
+		int ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	//ï¿½Ú“ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½_ï¿½Ìï¿½ï¿½ï¿½ï¿½Ì“_
 		int ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		int ctrgt_xp = ctrgt + YCELL_NUM+6;
 		int ctrgt_yp = ctrgt + 1;
@@ -3782,7 +3784,7 @@ void solidlagpointsecond(_fiber_type* fiberp,int fibernumber){
 		else if (lagphi>=PHIL) lagrho=RHOL;
 		else lagrho=(RHOL+RHOG)*0.5+(RHOL-RHOG)*0.5*sin((lagphi-(PHIL+PHIG)*0.5)/(PHIL-PHIG)*M_PI);
 		
-		ctrgt = (int)((fiberlagx+3.0*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	//ˆÚ“®‚³‚¹‚½“_‚Ì¶‰º‚Ì“_
+		ctrgt = (int)((fiberlagx+3.0*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	//ï¿½Ú“ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½_ï¿½Ìï¿½ï¿½ï¿½ï¿½Ì“_
 		ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		ctrgt_xp = ctrgt + YCELL_NUM+6;
 		ctrgt_yp = ctrgt + 1;
@@ -3803,7 +3805,7 @@ void solidlagpointsecond(_fiber_type* fiberp,int fibernumber){
 					+ voldp_yp->x*(ctrgtp_xp->x-0.5*dx-fiberlagx)*(fiberlagy-ctrgtp->y)/dx/dy + voldp_xp_yp->x*(fiberlagx-ctrgtp->x+0.5*dx)*(fiberlagy-ctrgtp->y)/dx/dy);
 		
 		
-		ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+3.0*dy)/dy);	//ˆÚ“®‚³‚¹‚½“_‚Ì¶‰º‚Ì“_
+		ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+3.0*dy)/dy);	//ï¿½Ú“ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½_ï¿½Ìï¿½ï¿½ï¿½ï¿½Ì“_
 		ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		ctrgt_xp = ctrgt + YCELL_NUM+6;
 		ctrgt_yp = ctrgt + 1;
@@ -3916,7 +3918,7 @@ void discount(void){
 		
 		
 #ifdef USEMPI
-//------------ rank‚Ì‚‚¢‚à‚Ì‚©‚ç’á‚¢‚à‚Ì‚Ö‹«ŠE–Ê‚Ì‘—óM -----------//
+//------------ rankï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì‚ï¿½ï¿½ï¿½á‚¢ï¿½ï¿½ï¿½Ì‚Ö‹ï¿½ï¿½Eï¿½Ê‚Ì‘ï¿½ï¿½ï¿½M -----------//
 void SORmpi1(int my_rank){
 	int mailnum = 0;
 	int mailsize1;
@@ -4001,7 +4003,7 @@ void SORmpi1(int my_rank){
 	}
 #endif
 }
-			//-------------------- rank‚Ì‚‚¢‚à‚Ì‚©‚ç’á‚¢‚à‚Ì‚Ö‚Ì‘—óMI—¹ -----//
+			//-------------------- rankï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì‚ï¿½ï¿½ï¿½á‚¢ï¿½ï¿½ï¿½Ì‚Ö‚Ì‘ï¿½ï¿½ï¿½Mï¿½Iï¿½ï¿½ -----//
 #endif
 
 
@@ -4037,7 +4039,7 @@ void SOR(int chkflag, int my_rank){
 	
 	pressaverage=0.0;
 	
-	dti = 1.0/dt;	//1‰ñ–Ú
+	dti = 1.0/dt;	//1ï¿½ï¿½ï¿½
 		
 	if(my_rank==0){
 		for(int i=3; i<(XCELL_NUM+3);i++){
@@ -4146,7 +4148,7 @@ void SOR(int chkflag, int my_rank){
 			}
 		}
 	}
-	//-------------- MPI_BcastI—¹ ----------------//
+	//-------------- MPI_Bcastï¿½Iï¿½ï¿½ ----------------//
 
 	mailsize1=YCELL_NUM;
 	mailsize2=(XCELL_NUM)*(YCELL_NUM)/process_num;
@@ -4170,7 +4172,7 @@ void SOR(int chkflag, int my_rank){
 	for(;l<MAX;l++) {
 		dpmax=0.0;
 		
-			//------------ rank‚Ì’á‚¢‚à‚Ì‚©‚ç‚‚¢‚à‚Ì‚Ö‹«ŠE–Ê‚Ì‘—óM -----------//
+			//------------ rankï¿½Ì’á‚¢ï¿½ï¿½ï¿½Ì‚ï¿½ï¿½ç‚ï¿½ï¿½ï¿½ï¿½ï¿½Ì‚Ö‹ï¿½ï¿½Eï¿½Ê‚Ì‘ï¿½ï¿½ï¿½M -----------//
 #ifdef WALLX
 		if(my_rank!=(process_num-1)){
 			mailnum=0;
@@ -4249,11 +4251,11 @@ void SOR(int chkflag, int my_rank){
 //		mailnum++;
 //	}
 #endif
-			//-------------------- rank‚Ì’á‚¢‚à‚Ì‚©‚ç‚‚¢‚à‚Ì‚Ö‚Ì‘—óMI—¹ -----//
+			//-------------------- rankï¿½Ì’á‚¢ï¿½ï¿½ï¿½Ì‚ï¿½ï¿½ç‚ï¿½ï¿½ï¿½ï¿½ï¿½Ì‚Ö‚Ì‘ï¿½ï¿½ï¿½Mï¿½Iï¿½ï¿½ -----//
 		
 		
 		if(!(l%8)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=(XCELL_NUM/process_num*my_rank+3); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 				for(int j=3; j<(YCELL_NUM+3); j+=2){
 					indexSORdefine(i,j);
@@ -4285,9 +4287,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0`1I—¹ ---------------//
+			//-------------- step0ï¿½`1ï¿½Iï¿½ï¿½ ---------------//
 		
-			//-------------- step2`3 ------------------//
+			//-------------- step2ï¿½`3 ------------------//
 			for(int i=(XCELL_NUM/process_num*my_rank+4); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 				for(int j=3; j<(YCELL_NUM+3); j+=2){
 					indexSORdefine(i,j);
@@ -4319,7 +4321,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-1)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=(XCELL_NUM/process_num*my_rank+3); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 				for(int j=(YCELL_NUM+1); j>2; j-=2){
 					indexSORdefine(i,j);
@@ -4351,9 +4353,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0`1I—¹ ---------------//
+			//-------------- step0ï¿½`1ï¿½Iï¿½ï¿½ ---------------//
 		
-			//-------------- step2`3 ------------------//
+			//-------------- step2ï¿½`3 ------------------//
 			for(int i=(XCELL_NUM/process_num*my_rank+4); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 				for(int j=(YCELL_NUM+1); j>2; j-=2){
 					indexSORdefine(i,j);
@@ -4385,7 +4387,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-2)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=(XCELL_NUM/process_num*(my_rank+1)+1); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 				for(int j=(YCELL_NUM+1); j>2; j-=2){
 					indexSORdefine(i,j);
@@ -4417,9 +4419,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0`1I—¹ ---------------//
+			//-------------- step0ï¿½`1ï¿½Iï¿½ï¿½ ---------------//
 		
-			//-------------- step2`3 ------------------//
+			//-------------- step2ï¿½`3 ------------------//
 			for(int i=(XCELL_NUM/process_num*(my_rank+1)+2); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 				for(int j=(YCELL_NUM+1); j>2; j-=2){
 					indexSORdefine(i,j);
@@ -4451,7 +4453,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-3)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=(XCELL_NUM/process_num*(my_rank+1)+1); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 				for(int j=3; j<(YCELL_NUM+3); j+=2){
 					indexSORdefine(i,j);
@@ -4483,9 +4485,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0`1I—¹ ---------------//
+			//-------------- step0ï¿½`1ï¿½Iï¿½ï¿½ ---------------//
 		
-			//-------------- step2`3 ------------------//
+			//-------------- step2ï¿½`3 ------------------//
 			for(int i=(XCELL_NUM/process_num*(my_rank+1)+2); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 				for(int j=3; j<(YCELL_NUM+3); j+=2){
 					indexSORdefine(i,j);
@@ -4517,7 +4519,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-4)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j+=2){
 				for(int i=(XCELL_NUM/process_num*my_rank+3); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 					indexSORdefine(i,j);
@@ -4549,9 +4551,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0`1I—¹ ---------------//
+			//-------------- step0ï¿½`1ï¿½Iï¿½ï¿½ ---------------//
 		
-			//-------------- step2`3 ------------------//
+			//-------------- step2ï¿½`3 ------------------//
 			for(int j=3; j<(YCELL_NUM+3); j+=2){
 				for(int i=(XCELL_NUM/process_num*my_rank+4); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 					indexSORdefine(i,j);
@@ -4583,7 +4585,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-5)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=(YCELL_NUM+1); j>2; j-=2){
 				for(int i=(XCELL_NUM/process_num*my_rank+3); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 					indexSORdefine(i,j);
@@ -4615,9 +4617,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0`1I—¹ ---------------//
+			//-------------- step0ï¿½`1ï¿½Iï¿½ï¿½ ---------------//
 		
-			//-------------- step2`3 ------------------//
+			//-------------- step2ï¿½`3 ------------------//
 			for(int j=(YCELL_NUM+1); j>2; j-=2){
 				for(int i=(XCELL_NUM/process_num*my_rank+4); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 					indexSORdefine(i,j);
@@ -4649,7 +4651,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-6)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=(YCELL_NUM+1); j>2; j-=2){
 				for(int i=(XCELL_NUM/process_num*(my_rank+1)+1); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 					indexSORdefine(i,j);
@@ -4681,9 +4683,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0`1I—¹ ---------------//
+			//-------------- step0ï¿½`1ï¿½Iï¿½ï¿½ ---------------//
 		
-			//-------------- step2`3 ------------------//
+			//-------------- step2ï¿½`3 ------------------//
 			for(int j=(YCELL_NUM+1); j>2; j-=2){
 				for(int i=(XCELL_NUM/process_num*(my_rank+1)+2); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 					indexSORdefine(i,j);
@@ -4715,7 +4717,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-7)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j+=2){
 				for(int i=(XCELL_NUM/process_num*(my_rank+1)+1); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 					indexSORdefine(i,j);
@@ -4747,9 +4749,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0`1I—¹ ---------------//
+			//-------------- step0ï¿½`1ï¿½Iï¿½ï¿½ ---------------//
 		
-			//-------------- step2`3 ------------------//
+			//-------------- step2ï¿½`3 ------------------//
 			for(int j=3; j<(YCELL_NUM+3); j+=2){
 				for(int i=(XCELL_NUM/process_num*(my_rank+1)+2); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 					indexSORdefine(i,j);
@@ -4835,7 +4837,7 @@ void SOR(int chkflag, int my_rank){
 			}
 		}
 	}
-	//-------------- MPI_GatherI—¹ ---------------//
+	//-------------- MPI_Gatherï¿½Iï¿½ï¿½ ---------------//
 	
 
 	for(int i=3; i<(XCELL_NUM+3); i++) {
@@ -4868,7 +4870,7 @@ void SOR(int chkflag, int my_rank){
 	delete [] mail0;
 }
 	
-#else	//USEMPI‚Ìelse
+#else	//USEMPIï¿½ï¿½else
 		
 		
 		
@@ -4924,7 +4926,7 @@ void SOR(int chkflag){
 		dpmax=0.0;
 		
 //		if(!(l%8)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=3; i<(XCELL_NUM+3); i++){
 				for(int j=3; j<(YCELL_NUM+3); j++){
 					indexSORdefine(i,j);
@@ -4949,7 +4951,7 @@ void SOR(int chkflag){
 //		}
 		
 /*		if(!(l%8-1)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=3; i<(XCELL_NUM+3); i++){
 				for(int j=(YCELL_NUM+2); j>2; j--){
 					indexSORdefine(i,j);
@@ -4967,7 +4969,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-2)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=(XCELL_NUM+2); i>2; i--){
 				for(int j=(YCELL_NUM+2); j>2; j--){
 					indexSORdefine(i,j);
@@ -4985,7 +4987,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-3)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=(XCELL_NUM+2); i>2; i--){
 				for(int j=3; j<(YCELL_NUM+3); j++){
 					indexSORdefine(i,j);
@@ -5003,7 +5005,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-4)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j++){
 				for(int i=3; i<(XCELL_NUM+3); i++){
 					indexSORdefine(i,j);
@@ -5021,7 +5023,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-5)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=(YCELL_NUM+2); j>2; j--){
 				for(int i=3; i<(XCELL_NUM+3); i++){
 					indexSORdefine(i,j);
@@ -5039,7 +5041,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-6)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=(YCELL_NUM+2); j>2; j--){
 				for(int i=(XCELL_NUM+2); i>2; i--){
 					indexSORdefine(i,j);
@@ -5057,7 +5059,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-7)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j++){
 				for(int i=(XCELL_NUM+2); i>2; i--){
 					indexSORdefine(i,j);
@@ -5088,7 +5090,7 @@ void SOR(int chkflag){
 		dpmax=0.0;
 		
 		if(!(l%8)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=3; i<(XCELL_NUM+3); i++){
 				for(int j=3; j<(YCELL_NUM+3); j++){
 					indexSORdefine(i,j);
@@ -5106,7 +5108,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-1)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=3; i<(XCELL_NUM+3); i++){
 				for(int j=(YCELL_NUM+2); j>2; j--){
 					indexSORdefine(i,j);
@@ -5124,7 +5126,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-2)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=(XCELL_NUM+2); i>2; i--){
 				for(int j=(YCELL_NUM+2); j>2; j--){
 					indexSORdefine(i,j);
@@ -5142,7 +5144,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-3)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=(XCELL_NUM+2); i>2; i--){
 				for(int j=3; j<(YCELL_NUM+3); j++){
 					indexSORdefine(i,j);
@@ -5160,7 +5162,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-4)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j++){
 				for(int i=3; i<(XCELL_NUM+3); i++){
 					indexSORdefine(i,j);
@@ -5178,7 +5180,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-5)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=(YCELL_NUM+2); j>2; j--){
 				for(int i=3; i<(XCELL_NUM+3); i++){
 					indexSORdefine(i,j);
@@ -5196,7 +5198,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-6)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=(YCELL_NUM+2); j>2; j--){
 				for(int i=(XCELL_NUM+2); i>2; i--){
 					indexSORdefine(i,j);
@@ -5214,7 +5216,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-7)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j++){
 				for(int i=(XCELL_NUM+2); i>2; i--){
 					indexSORdefine(i,j);
@@ -5246,7 +5248,7 @@ void SOR(int chkflag){
 		dpmax=0.0;
 		
 		if(!(l%8)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=3; i<(XCELL_NUM+3); i++){
 				for(int j=3; j<(YCELL_NUM+3); j++){
 					indexSORdefine(i,j);
@@ -5264,7 +5266,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-1)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=3; i<(XCELL_NUM+3); i++){
 				for(int j=(YCELL_NUM+2); j>2; j--){
 					indexSORdefine(i,j);
@@ -5282,7 +5284,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-2)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=(XCELL_NUM+2); i>2; i--){
 				for(int j=(YCELL_NUM+2); j>2; j--){
 					indexSORdefine(i,j);
@@ -5300,7 +5302,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-3)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int i=(XCELL_NUM+2); i>2; i--){
 				for(int j=3; j<(YCELL_NUM+3); j++){
 					indexSORdefine(i,j);
@@ -5318,7 +5320,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-4)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j++){
 				for(int i=3; i<(XCELL_NUM+3); i++){
 					indexSORdefine(i,j);
@@ -5336,7 +5338,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-5)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=(YCELL_NUM+2); j>2; j--){
 				for(int i=3; i<(XCELL_NUM+3); i++){
 					indexSORdefine(i,j);
@@ -5354,7 +5356,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-6)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=(YCELL_NUM+2); j>2; j--){
 				for(int i=(XCELL_NUM+2); i>2; i--){
 					indexSORdefine(i,j);
@@ -5372,7 +5374,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-7)){
-			//-------------------- step0`1 --------------------//
+			//-------------------- step0ï¿½`1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j++){
 				for(int i=(XCELL_NUM+2); i>2; i--){
 					indexSORdefine(i,j);
