@@ -21,4 +21,4 @@ Thanks to Ishida and Deji.
 
 **Article**
 
-[Reductions in Anisotropic Errors from Implementation of Phase-Field Wetting Boundary Condition for Off-Grid Objects](https://www.worldscientific.com/doi/10.1142/S0219876215500425)
+[https://doi.org/10.1142/S0219876215500425](https://doi.org/10.1142/S0219876215500425)
