@@ -1,24 +1,17 @@
-Computational Fluid Dynamics Simulation for two-phase fluids contacting on solid objects (Liquid-Gas-Solid) using Phase-Field method.
-Off-grid strcutre is implemented by Immersed-Boundary method.
+# Phase-Field Simulation of Multiphase Fluid Flow with Wetting Boundary Conditions
 
-**How to build and run**
+This repository contains a simulation code for multiphase fluid flow using the phase-field method (PFM), with an improved implementation of the wetting boundary condition for off-grid objects. The proposed method, called the immersed-boundary phase-field implementation (IB-PFI), aims to reduce anisotropic errors arising from the use of a rectangular grid.
 
-mpic++ pfmwrite.cpp -lm -O3
+## Features
 
-mpirun -np 2 ./a.out
+- Simulates droplets adhering to circular objects and capillary flow in a parallel-plate channel.
+- Implements the wetting boundary condition for off-grid objects using the immersed-boundary formulation of solid–fluid interfaces.
+- Suppresses anisotropic errors and improves agreement with theoretical predictions compared to simulations without IB-PFI.
+- Extends the applicability of the PFM to simulations of multiphase fluid flows under various geometric conditions.
 
-The number of cpu cores (np_num) should statisfy [XCELL_NUM % (2*np_num) == 0]. (e.g. The above expression means np_num = 2)
+## How to Build and Run
 
-**How to visualize**
-
-File format is ASCII Tecplot (tec).
-You can visualize the data using ParaView.
-You can get ParaView at https://www.paraview.org/
-
-**Acknowlege**
-
-Thanks to Ishida and Deji.
-
-**Article**
-
-[https://doi.org/10.1142/S0219876215500425](https://doi.org/10.1142/S0219876215500425)
+1. Compile the code using the following command:
+   `mpic++ pfmwrite.cpp -lm -O3`
+3. Run the simulation with the desired number of CPU cores (`np_num`). Note that `np_num` should satisfy the condition `[XCELL_NUM % (2*np_num) == 0]`. For example, to run with 2 CPU cores:
+`mpirun -np 2 ./a.out`
