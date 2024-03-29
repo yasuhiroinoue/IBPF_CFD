@@ -1292,9 +1292,9 @@ void initial(void){
 		CH_eq();
 	}
 }
-			//-------------- �������I��� -----------------//
+			//-------------- End of Initialization -----------------//
 	
-			//-------------- �v�Z�{�� ---------------------//
+			//-------------- The main of Calculation ---------------------//
 #ifdef USEMPI
 void hontai(int chkflag, int my_rank){
 	for(int i=0; i<(XCELL_NUM+6); i++) {
@@ -1319,7 +1319,7 @@ void hontai(int chkflag, int my_rank){
 	flagbnd();
 }
 	
-#else		//USEMPI��else
+#else		//Else for USEMPI
 	
 void hontai(int chkflag){
 	for(int i=0; i<(XCELL_NUM+6); i++) {
@@ -1329,7 +1329,8 @@ void hontai(int chkflag){
 				_vold_type* voldp = &VOLD[index0];
 				cellp = &CELL[index0];
 				
-				voldp->x = cellp->v_x;							//���̏�Ԃł�cellp->v_x�͂܂����Ƃ̂܂�
+				voldp->x = cellp->v_x;							// At this point, cellp->v_x is still the same as before
+
 				voldp->y = cellp->v_y;
 			
 		}
@@ -1344,7 +1345,7 @@ void hontai(int chkflag){
 	flagbnd();
 }	
 #endif
-			//-------------- �v�Z�{�̏I��� ---------------//
+			//-------------- End of The main Calculation ---------------//
 	
 	
 			//-------------- projection -------------------//
@@ -1364,7 +1365,7 @@ void projection(int chkflag,int my_rank){
 	kyokai();
 	kyokai();
 }
-#else //USEMPI��else
+#else //Else for USEMPI
 void projection(int chkflag){
 	nseq();
 	
@@ -1379,10 +1380,10 @@ void projection(int chkflag){
 	kyokai();
 }
 #endif //USEMPI
-			//-------------- projection�I��� -------------//
+			//-------------- End of projection -------------//
 	
 	
-			//-------------- ���̗����̓��o ---------------//
+			//-------------- Derivation of tentative flow velocity ---------------//
 void nseq(void){
 	double vx_average,vy_average,vxvxx,vyvxy,vyvyy,vxvyx;
 	double dxi, dyi, iryu, kaku,kaimen;
@@ -1398,7 +1399,7 @@ void nseq(void){
 	dyi = 1.0/dy;
 	
 #ifndef WALLX	
-	for(int i=3/*4*/; i<(XCELL_NUM+3); i++){					//�������E�ł�3
+	for(int i=3/*4*/; i<(XCELL_NUM+3); i++){					// For periodic boundaries, it's 3
 
 #else
 	for(int i=3; i<(XCELL_NUM+3); i++){					
@@ -1434,7 +1435,7 @@ void nseq(void){
 
 	for(int i=3; i<(XCELL_NUM+4); i++){
 #ifndef WALLY
-		for(int j=3/*4*/; j<(YCELL_NUM+3); j++){					//�������E�ł�3
+		for(int j=3/*4*/; j<(YCELL_NUM+3); j++){					// For periodic boundaries, it's 3
 #else
 		for(int j=3; j<(YCELL_NUM+3); j++){					
 #endif
@@ -1456,7 +1457,7 @@ void nseq(void){
 
 			kaimen=(1.0-cellp->vof_y)*kappa1*dyi*(-ddrho[index_yp]+27.0*(ddrho[index0]-ddrho[index_ym])+ddrho[index_ymm])/24.0*cellp->rho_y/(cellp->rho_y*(1.0-cellp->vof_y)+RHOS*cellp->vof_y);
 
-	if(n==0) cellp->v_yhypo = cellp->v_y + dt*(iryu + kaku + kaimen);	//1���
+	if(n==0) cellp->v_yhypo = cellp->v_y + dt*(iryu + kaku + kaimen);	// First time
 	else			cellp->v_yhypo = cellp->v_y + dt*0.5*(3.0*(iryu + kaku + kaimen)-cellp->hy);
 				cellp->hy=iryu + kaku + kaimen;
 		}
@@ -1472,7 +1473,8 @@ void nseq(void){
 		}
 	}
 }
-			//-------------- ���̗����̓��o�I��� ---------//
+			//-------------- End of deriving tentative flow velocity ---------//
+
 		
 		
 		
@@ -1609,7 +1611,7 @@ void koshin(void){
 	}
 */		
 	
-	//�������E�����ŕ��̂����E���܂����Ƃ��͍l�����邱��
+	// Consider when an object crosses the boundary under periodic boundary conditions
 /*	for(int f=fibernum-1; f>=FIBER_NUM; f--){
 		fiberfx[f-FIBER_NUM]+=fiberfx[f];
 		fiberfy[f-FIBER_NUM]+=fiberfy[f];
@@ -1652,13 +1654,13 @@ void koshin(void){
 //		}
 //	}
 }
-			//-------------- koshin �I��� ---------------//
+			//-------------- End of update ---------------//
 			
 			
 		
 		
 		
-			//-------------- rho�̌��� --------------------//
+			//-------------- Determination of rho --------------------//
 void rhodefine(void) {
 	for(int i=0; i<(XCELL_NUM+6); i++) {
 		for(int j=0; j<(YCELL_NUM+6); j++) {
@@ -1691,7 +1693,7 @@ void rhodefine(void) {
 	}
 	*/
 }
-			//-------------- rho�̌���I��� --------------//
+			//-------------- End of determination of rho --------------//
 			
 	
 void ddrhodefine(void){
@@ -1726,7 +1728,7 @@ void ddrhodefine(void){
 		
 void ddrhobnd(void){
 #ifndef WALLY
-	for(int i=0; i<(XCELL_NUM+6); i++){											//�������E
+	for(int i=0; i<(XCELL_NUM+6); i++){											//Periodic boundary
 		indexbndy(i);
 		
 		ddrho[index_y0]   = ddrho[index_ycp0];
@@ -1751,7 +1753,7 @@ void ddrhobnd(void){
 #endif
 	
 #ifdef WALLY
-	for(int i=0; i<(XCELL_NUM+6); i++){											//�ǖ�
+	for(int i=0; i<(XCELL_NUM+6); i++){											//Wall
 		indexbndy(i);
 			
 			ddrho[index_y0]   = ddrho[index_y5];
@@ -1778,7 +1780,7 @@ void ddrhobnd(void){
 }
 		
 			
-			//----------- MU�̌��� ---------------//
+			//----------- Determination of MU ---------------//
 void mudefine(void) {
 	double phixy;
 	double rhoxy;
@@ -1809,8 +1811,7 @@ void mudefine(void) {
 		}
 	}
 }
-
-			//----------- MU�̌���I��� ---------//
+			//----------- End of determination of MU ---------//
 		
 		
 		
@@ -1957,7 +1958,7 @@ void CH_eq(void) {
 		
 void Fbnd(double Fx[(XCELL_NUM+6)*(YCELL_NUM+6)],double Fy[(XCELL_NUM+6)*(YCELL_NUM+6)]){
 #ifdef WALLY
-	for(int i=0; i<(XCELL_NUM+6); i++){										//�ǖ�
+	for(int i=0; i<(XCELL_NUM+6); i++){										//Wall
 		indexbndy(i);
 			
 		Fx[index_y0]   = -Fx[index_y5];
@@ -2072,12 +2073,12 @@ void filewrite(void){
 }
 
 
-//-------------- ���̗������E���� ---------------------//
+//-------------- Tentative flow velocity boundary conditions ---------------------//
 void vhypobnd(void){
 	
 #ifndef WALLY
 	
-	for(int i=0; i<(XCELL_NUM+6); i++){										//�������E
+	for(int i=0; i<(XCELL_NUM+6); i++){										//Periodic boundary
 		indexbndy(i);
 			
 		cellp_y0->v_xhypo   = cellp_ycp0->v_xhypo;
@@ -2128,7 +2129,7 @@ void vhypobnd(void){
 #endif
 
 #ifdef WALLY
-	for(int i=0; i<(XCELL_NUM+6); i++){										//�ǖ�
+	for(int i=0; i<(XCELL_NUM+6); i++){										//Wall
 		indexbndy(i);
 			
 /*		cellp_y0->v_xhypo   = -cellp_y5->v_xhypo;			//cavity
@@ -2180,13 +2181,12 @@ void vhypobnd(void){
 	}
 #endif
 }
-			//-------------- ���̗������E�����I��� ---------------//
+			//-------------- End of tentative flow velocity boundary conditions ---------------//
 
-
-			//-------------- �����̋��E���� -----------//
-void kyokai(void){
+			//-------------- Flow velocity boundary conditions -----------//
+void kyokai(void){//"kyokai" is Japanese, it means boundary
 #ifndef WALLY
-	for(int i=0; i<(XCELL_NUM+6); i++){										//�������E
+	for(int i=0; i<(XCELL_NUM+6); i++){										//Periodic boundary
 		indexbndy(i);
 			
 		cellp_y0->v_x   = cellp_ycp0->v_x;
@@ -2235,7 +2235,7 @@ void kyokai(void){
 	}
 #endif
 #ifdef WALLY
-	for(int i=0; i<(XCELL_NUM+6); i++){										//�ǖ�
+	for(int i=0; i<(XCELL_NUM+6); i++){										//Wall
 		indexbndy(i);
 			
 /*		cellp_y0->v_x   = -cellp_y5->v_x;	//cavity
@@ -2287,8 +2287,7 @@ void kyokai(void){
 	}
 #endif
 }
-			//-------------- �����̋��E�����I��� -----//
-
+			//-------------- End of flow velocity boundary conditions -----//
 
 //-------------- E -----------------//
 void pressbnd(void){
@@ -3188,7 +3187,7 @@ double interphi(int cellindex,int phiflag){
 		else yflag=0;
 #endif
 */		
-		ctrgt = (int)((ctargetx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((ctargety+2.5*dy)/dy);	//�ړ��������_�̍����̓_
+		ctrgt = (int)((ctargetx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((ctargety+2.5*dy)/dy);	// The point at the bottom left of the moved point
 		ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		ctrgt_xp = ctrgt + YCELL_NUM+6;
 		ctrgt_yp = ctrgt + 1;
@@ -3204,7 +3203,7 @@ double interphi(int cellindex,int phiflag){
 		
 		if(hnum==99) printf("hnum>99 error x=%f y=%f flag=%d\n",cellp_in->x,cellp_in->y,phiflag);
 		
-		if(marknvec_x>0.92388){	//�c
+		if(marknvec_x>0.92388){	//Vertical
 			if((flagp->c%2)&&(flagp_yp->c%2)){
 				hnum=100;
 				
@@ -3248,7 +3247,7 @@ double interphi(int cellindex,int phiflag){
 				}
 			}
 		}
-		else if(marknvec_y>0.92388){	//��
+		else if(marknvec_y>0.92388){	// Horizontal
 			if((flagp->c%2)&&(flagp_xp->c%2)){
 				hnum=100;
 				
@@ -3270,7 +3269,7 @@ double interphi(int cellindex,int phiflag){
 				}
 			}
 		}
-		else if(marknvec_y<-0.92388){	//��
+		else if(marknvec_y<-0.92388){	// Horizontal
 			if((flagp_yp->c%2)&&(flagp_xp_yp->c%2)){
 				hnum=100;
 				
@@ -3292,7 +3291,7 @@ double interphi(int cellindex,int phiflag){
 				}
 			}
 		}
-		else if((marknvec_x*marknvec_y)>0.0){	//�΂�(�X����)
+		else if((marknvec_x*marknvec_y)>0.0){	// Diagonal (negative slope)
 			if((flagp_xp->c%2)&&(flagp_yp->c%2)){
 				hnum=100;
 				
@@ -3314,7 +3313,7 @@ double interphi(int cellindex,int phiflag){
 				}
 			}
 		}
-		else {	//�΂�(�X����)
+		else {	// Diagonal (positive slope)
 			if((flagp->c%2)&&(flagp_xp_yp->c%2)){
 				hnum=100;
 				
@@ -3365,8 +3364,7 @@ double interphi(int cellindex,int phiflag){
 	array_deji[0][2]=marknvec_y;
 	b_deji[0]=0.0;
 	
-	lu(array_deji,b_deji,x_deji);	//LU����
-	
+	lu(array_deji,b_deji,x_deji);	// LU decomposition
 	
 	
 	target=x_deji[0]+x_deji[1]*cellp_in->x+x_deji[2]*cellp_in->y;
@@ -3438,7 +3436,7 @@ void solidlagpoint(_fiber_type* fiberp,int fibernumber){
 	dvydy = new double [CELL_SIZE];
 	memset(dvydy,0,CELL_SIZE*sizeof(double));
 	
-	for(int i=3; i<(XCELL_NUM+3); i++){					//�������E�ł�3
+	for(int i=3; i<(XCELL_NUM+3); i++){ // For periodic boundaries, it's 3
 		for(int j=3; j<(YCELL_NUM+3); j++){
 			indexnsdefine(i,j);
 			
@@ -3646,7 +3644,7 @@ void solidlagpoint(_fiber_type* fiberp,int fibernumber){
 		double nvec_x = cos(2.0*M_PI/(double)lagnum*(double)lagindex);
 		double nvec_y = sin(2.0*M_PI/(double)lagnum*(double)lagindex);
 		
-		int ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	//�ړ��������_�̍����̓_
+		int ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	// The point at the bottom left of the moved point
 		int ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		int ctrgt_xp = ctrgt + YCELL_NUM+6;
 		int ctrgt_yp = ctrgt + 1;
@@ -3692,7 +3690,7 @@ void solidlagpoint(_fiber_type* fiberp,int fibernumber){
 		
 		lagmu = MUG+(MUL-MUG)/(RHOL-RHOG)*(lagrho-RHOG);
 		
-		ctrgt = (int)((fiberlagx+3.0*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	//�ړ��������_�̍����̓_
+		ctrgt = (int)((fiberlagx+3.0*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	// The point at the bottom left of the moved point
 		ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		ctrgt_xp = ctrgt + YCELL_NUM+6;
 		ctrgt_yp = ctrgt + 1;
@@ -3705,7 +3703,7 @@ void solidlagpoint(_fiber_type* fiberp,int fibernumber){
 		lagv_x = (ctrgtp->v_x*(ctrgtp_xp->x-0.5*dx-fiberlagx)*(ctrgtp_yp->y-fiberlagy)/dx/dy + ctrgtp_xp->v_x*(fiberlagx-ctrgtp->x+0.5*dx)*(ctrgtp_yp->y-fiberlagy)/dx/dy
 					+ ctrgtp_yp->v_x*(ctrgtp_xp->x-0.5*dx-fiberlagx)*(fiberlagy-ctrgtp->y)/dx/dy + ctrgtp_xp_yp->v_x*(fiberlagx-ctrgtp->x+0.5*dx)*(fiberlagy-ctrgtp->y)/dx/dy);
 		
-		ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+3.0*dy)/dy);	//�ړ��������_�̍����̓_
+		ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+3.0*dy)/dy);	// The point at the bottom left of the moved point
 		ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		ctrgt_xp = ctrgt + YCELL_NUM+6;
 		ctrgt_yp = ctrgt + 1;
@@ -3760,7 +3758,7 @@ void solidlagpointsecond(_fiber_type* fiberp,int fibernumber){
 		fiberlagx = fiberp->x+(fiberp->radius+deltar*0.5)*cos(2.0*M_PI/(double)lagnum*(double)lagindex);
 		fiberlagy = fiberp->y+(fiberp->radius+deltar*0.5)*sin(2.0*M_PI/(double)lagnum*(double)lagindex);
 		
-		int ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	//�ړ��������_�̍����̓_
+		int ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	// The point at the bottom left of the moved point
 		int ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		int ctrgt_xp = ctrgt + YCELL_NUM+6;
 		int ctrgt_yp = ctrgt + 1;
@@ -3784,7 +3782,7 @@ void solidlagpointsecond(_fiber_type* fiberp,int fibernumber){
 		else if (lagphi>=PHIL) lagrho=RHOL;
 		else lagrho=(RHOL+RHOG)*0.5+(RHOL-RHOG)*0.5*sin((lagphi-(PHIL+PHIG)*0.5)/(PHIL-PHIG)*M_PI);
 		
-		ctrgt = (int)((fiberlagx+3.0*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	//�ړ��������_�̍����̓_
+		ctrgt = (int)((fiberlagx+3.0*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+2.5*dy)/dy);	// The point at the bottom left of the moved point
 		ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		ctrgt_xp = ctrgt + YCELL_NUM+6;
 		ctrgt_yp = ctrgt + 1;
@@ -3805,7 +3803,7 @@ void solidlagpointsecond(_fiber_type* fiberp,int fibernumber){
 					+ voldp_yp->x*(ctrgtp_xp->x-0.5*dx-fiberlagx)*(fiberlagy-ctrgtp->y)/dx/dy + voldp_xp_yp->x*(fiberlagx-ctrgtp->x+0.5*dx)*(fiberlagy-ctrgtp->y)/dx/dy);
 		
 		
-		ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+3.0*dy)/dy);	//�ړ��������_�̍����̓_
+		ctrgt = (int)((fiberlagx+2.5*dx)/dx)*(YCELL_NUM+6)+(int)((fiberlagy+3.0*dy)/dy);	// The point at the bottom left of the moved point
 		ctrgt_xp_yp = ctrgt+YCELL_NUM+6+1;
 		ctrgt_xp = ctrgt + YCELL_NUM+6;
 		ctrgt_yp = ctrgt + 1;
@@ -3918,7 +3916,7 @@ void discount(void){
 		
 		
 #ifdef USEMPI
-//------------ rank�̍������̂���Ⴂ���̂֋��E�ʂ̑���M -----------//
+//------------ Sending and receiving boundary surfaces from higher to lower ranks -----------//
 void SORmpi1(int my_rank){
 	int mailnum = 0;
 	int mailsize1;
@@ -4003,7 +4001,7 @@ void SORmpi1(int my_rank){
 	}
 #endif
 }
-			//-------------------- rank�̍������̂���Ⴂ���̂ւ̑���M�I�� -----//
+			//-------------------- End of sending and receiving from higher to lower ranks -----//
 #endif
 
 
@@ -4039,7 +4037,7 @@ void SOR(int chkflag, int my_rank){
 	
 	pressaverage=0.0;
 	
-	dti = 1.0/dt;	//1���
+	dti = 1.0/dt;	//1st time
 		
 	if(my_rank==0){
 		for(int i=3; i<(XCELL_NUM+3);i++){
@@ -4148,7 +4146,7 @@ void SOR(int chkflag, int my_rank){
 			}
 		}
 	}
-	//-------------- MPI_Bcast�I�� ----------------//
+	//-------------- End of MPI_Bcast ----------------//
 
 	mailsize1=YCELL_NUM;
 	mailsize2=(XCELL_NUM)*(YCELL_NUM)/process_num;
@@ -4172,7 +4170,7 @@ void SOR(int chkflag, int my_rank){
 	for(;l<MAX;l++) {
 		dpmax=0.0;
 		
-			//------------ rank�̒Ⴂ���̂��獂�����̂֋��E�ʂ̑���M -----------//
+			//------------ Sending and receiving boundary surfaces from lower to higher ranks -----------//
 #ifdef WALLX
 		if(my_rank!=(process_num-1)){
 			mailnum=0;
@@ -4251,11 +4249,11 @@ void SOR(int chkflag, int my_rank){
 //		mailnum++;
 //	}
 #endif
-			//-------------------- rank�̒Ⴂ���̂��獂�����̂ւ̑���M�I�� -----//
+			//------------ Sending and receiving boundary surfaces from lower to higher ranks -----------//
 		
 		
 		if(!(l%8)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=(XCELL_NUM/process_num*my_rank+3); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 				for(int j=3; j<(YCELL_NUM+3); j+=2){
 					indexSORdefine(i,j);
@@ -4287,9 +4285,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0�`1�I�� ---------------//
+			//-------------- End of step0 to step1 ---------------//
 		
-			//-------------- step2�`3 ------------------//
+			//-------------- From step2 to step3 ------------------//
 			for(int i=(XCELL_NUM/process_num*my_rank+4); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 				for(int j=3; j<(YCELL_NUM+3); j+=2){
 					indexSORdefine(i,j);
@@ -4321,7 +4319,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-1)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=(XCELL_NUM/process_num*my_rank+3); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 				for(int j=(YCELL_NUM+1); j>2; j-=2){
 					indexSORdefine(i,j);
@@ -4353,9 +4351,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0�`1�I�� ---------------//
+			//-------------- End of step0 to step1 ---------------//
 		
-			//-------------- step2�`3 ------------------//
+			//-------------- From step2 to step3 ------------------//
 			for(int i=(XCELL_NUM/process_num*my_rank+4); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 				for(int j=(YCELL_NUM+1); j>2; j-=2){
 					indexSORdefine(i,j);
@@ -4387,7 +4385,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-2)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=(XCELL_NUM/process_num*(my_rank+1)+1); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 				for(int j=(YCELL_NUM+1); j>2; j-=2){
 					indexSORdefine(i,j);
@@ -4419,9 +4417,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0�`1�I�� ---------------//
+			//-------------- End of step0 to step1 ---------------//
 		
-			//-------------- step2�`3 ------------------//
+			//-------------- From step2 to step3 ------------------//
 			for(int i=(XCELL_NUM/process_num*(my_rank+1)+2); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 				for(int j=(YCELL_NUM+1); j>2; j-=2){
 					indexSORdefine(i,j);
@@ -4453,7 +4451,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-3)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=(XCELL_NUM/process_num*(my_rank+1)+1); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 				for(int j=3; j<(YCELL_NUM+3); j+=2){
 					indexSORdefine(i,j);
@@ -4485,9 +4483,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0�`1�I�� ---------------//
+			//-------------- End of step0 to step1 ---------------//
 		
-			//-------------- step2�`3 ------------------//
+			//-------------- From step2 to step3 ------------------//
 			for(int i=(XCELL_NUM/process_num*(my_rank+1)+2); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 				for(int j=3; j<(YCELL_NUM+3); j+=2){
 					indexSORdefine(i,j);
@@ -4519,7 +4517,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-4)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j+=2){
 				for(int i=(XCELL_NUM/process_num*my_rank+3); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 					indexSORdefine(i,j);
@@ -4551,9 +4549,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0�`1�I�� ---------------//
+			//-------------- End of step0 to step1 ---------------//
 		
-			//-------------- step2�`3 ------------------//
+			//-------------- From step2 to step3 ------------------//
 			for(int j=3; j<(YCELL_NUM+3); j+=2){
 				for(int i=(XCELL_NUM/process_num*my_rank+4); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 					indexSORdefine(i,j);
@@ -4585,7 +4583,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-5)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=(YCELL_NUM+1); j>2; j-=2){
 				for(int i=(XCELL_NUM/process_num*my_rank+3); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 					indexSORdefine(i,j);
@@ -4617,9 +4615,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0�`1�I�� ---------------//
+			//-------------- End of step0 to step1 ---------------//
 		
-			//-------------- step2�`3 ------------------//
+			//-------------- From step2 to step3 ------------------//
 			for(int j=(YCELL_NUM+1); j>2; j-=2){
 				for(int i=(XCELL_NUM/process_num*my_rank+4); i<(XCELL_NUM/process_num*(my_rank+1)+3); i+=2){
 					indexSORdefine(i,j);
@@ -4651,7 +4649,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-6)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=(YCELL_NUM+1); j>2; j-=2){
 				for(int i=(XCELL_NUM/process_num*(my_rank+1)+1); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 					indexSORdefine(i,j);
@@ -4683,9 +4681,9 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0�`1�I�� ---------------//
+			//-------------- End of step0 to step1 ---------------//
 		
-			//-------------- step2�`3 ------------------//
+			//-------------- From step2 to step3 ------------------//
 			for(int j=(YCELL_NUM+1); j>2; j-=2){
 				for(int i=(XCELL_NUM/process_num*(my_rank+1)+2); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 					indexSORdefine(i,j);
@@ -4717,7 +4715,7 @@ void SOR(int chkflag, int my_rank){
 		}
 		
 		if(!(l%8-7)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j+=2){
 				for(int i=(XCELL_NUM/process_num*(my_rank+1)+1); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 					indexSORdefine(i,j);
@@ -4749,9 +4747,10 @@ void SOR(int chkflag, int my_rank){
 		
 			SORmpi1(my_rank);
 		
-			//-------------- step0�`1�I�� ---------------//
+			//-------------- End of step0 to step1 ---------------//
 		
-			//-------------- step2�`3 ------------------//
+		//-------------- From step2 to step3 ------------------//
+
 			for(int j=3; j<(YCELL_NUM+3); j+=2){
 				for(int i=(XCELL_NUM/process_num*(my_rank+1)+2); i>(XCELL_NUM/process_num*(my_rank)+2); i-=2){
 					indexSORdefine(i,j);
@@ -4837,7 +4836,7 @@ void SOR(int chkflag, int my_rank){
 			}
 		}
 	}
-	//-------------- MPI_Gather�I�� ---------------//
+	//-------------- End of MPI_Gather ---------------//
 	
 
 	for(int i=3; i<(XCELL_NUM+3); i++) {
@@ -4870,8 +4869,7 @@ void SOR(int chkflag, int my_rank){
 	delete [] mail0;
 }
 	
-#else	//USEMPI��else
-		
+#else	// Else for USEMPI	
 		
 		
 void SOR(int chkflag){
@@ -4926,7 +4924,7 @@ void SOR(int chkflag){
 		dpmax=0.0;
 		
 //		if(!(l%8)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=3; i<(XCELL_NUM+3); i++){
 				for(int j=3; j<(YCELL_NUM+3); j++){
 					indexSORdefine(i,j);
@@ -4951,7 +4949,7 @@ void SOR(int chkflag){
 //		}
 		
 /*		if(!(l%8-1)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=3; i<(XCELL_NUM+3); i++){
 				for(int j=(YCELL_NUM+2); j>2; j--){
 					indexSORdefine(i,j);
@@ -4969,7 +4967,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-2)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=(XCELL_NUM+2); i>2; i--){
 				for(int j=(YCELL_NUM+2); j>2; j--){
 					indexSORdefine(i,j);
@@ -4987,7 +4985,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-3)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=(XCELL_NUM+2); i>2; i--){
 				for(int j=3; j<(YCELL_NUM+3); j++){
 					indexSORdefine(i,j);
@@ -5005,7 +5003,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-4)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j++){
 				for(int i=3; i<(XCELL_NUM+3); i++){
 					indexSORdefine(i,j);
@@ -5023,7 +5021,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-5)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=(YCELL_NUM+2); j>2; j--){
 				for(int i=3; i<(XCELL_NUM+3); i++){
 					indexSORdefine(i,j);
@@ -5041,7 +5039,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-6)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=(YCELL_NUM+2); j>2; j--){
 				for(int i=(XCELL_NUM+2); i>2; i--){
 					indexSORdefine(i,j);
@@ -5059,7 +5057,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-7)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j++){
 				for(int i=(XCELL_NUM+2); i>2; i--){
 					indexSORdefine(i,j);
@@ -5090,7 +5088,7 @@ void SOR(int chkflag){
 		dpmax=0.0;
 		
 		if(!(l%8)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=3; i<(XCELL_NUM+3); i++){
 				for(int j=3; j<(YCELL_NUM+3); j++){
 					indexSORdefine(i,j);
@@ -5108,7 +5106,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-1)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=3; i<(XCELL_NUM+3); i++){
 				for(int j=(YCELL_NUM+2); j>2; j--){
 					indexSORdefine(i,j);
@@ -5126,7 +5124,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-2)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=(XCELL_NUM+2); i>2; i--){
 				for(int j=(YCELL_NUM+2); j>2; j--){
 					indexSORdefine(i,j);
@@ -5144,7 +5142,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-3)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=(XCELL_NUM+2); i>2; i--){
 				for(int j=3; j<(YCELL_NUM+3); j++){
 					indexSORdefine(i,j);
@@ -5162,7 +5160,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-4)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j++){
 				for(int i=3; i<(XCELL_NUM+3); i++){
 					indexSORdefine(i,j);
@@ -5180,7 +5178,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-5)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=(YCELL_NUM+2); j>2; j--){
 				for(int i=3; i<(XCELL_NUM+3); i++){
 					indexSORdefine(i,j);
@@ -5198,7 +5196,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-6)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=(YCELL_NUM+2); j>2; j--){
 				for(int i=(XCELL_NUM+2); i>2; i--){
 					indexSORdefine(i,j);
@@ -5216,7 +5214,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-7)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j++){
 				for(int i=(XCELL_NUM+2); i>2; i--){
 					indexSORdefine(i,j);
@@ -5248,7 +5246,7 @@ void SOR(int chkflag){
 		dpmax=0.0;
 		
 		if(!(l%8)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=3; i<(XCELL_NUM+3); i++){
 				for(int j=3; j<(YCELL_NUM+3); j++){
 					indexSORdefine(i,j);
@@ -5266,7 +5264,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-1)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=3; i<(XCELL_NUM+3); i++){
 				for(int j=(YCELL_NUM+2); j>2; j--){
 					indexSORdefine(i,j);
@@ -5284,7 +5282,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-2)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=(XCELL_NUM+2); i>2; i--){
 				for(int j=(YCELL_NUM+2); j>2; j--){
 					indexSORdefine(i,j);
@@ -5302,7 +5300,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-3)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int i=(XCELL_NUM+2); i>2; i--){
 				for(int j=3; j<(YCELL_NUM+3); j++){
 					indexSORdefine(i,j);
@@ -5320,7 +5318,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-4)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j++){
 				for(int i=3; i<(XCELL_NUM+3); i++){
 					indexSORdefine(i,j);
@@ -5338,7 +5336,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-5)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=(YCELL_NUM+2); j>2; j--){
 				for(int i=3; i<(XCELL_NUM+3); i++){
 					indexSORdefine(i,j);
@@ -5356,7 +5354,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-6)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=(YCELL_NUM+2); j>2; j--){
 				for(int i=(XCELL_NUM+2); i>2; i--){
 					indexSORdefine(i,j);
@@ -5374,7 +5372,7 @@ void SOR(int chkflag){
 		}
 		
 		if(!(l%8-7)){
-			//-------------------- step0�`1 --------------------//
+			//-------------------- From step0 to step1 --------------------//
 			for(int j=3; j<(YCELL_NUM+3); j++){
 				for(int i=(XCELL_NUM+2); i>2; i--){
 					indexSORdefine(i,j);
